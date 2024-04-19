@@ -1,11 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const session = require('express-session');
 const app = express();
 
-// * Default app port and url
+// * Default app values
 const port = 3012;
 const url = `http//localhost:${port}`;
+const secret = 'stupidity';
 
 // ? Connect to MongoDB
 mongoose.connect('mongodb://127.0.0.1/auth-demo').then(res => {
@@ -21,6 +23,12 @@ const User = require('./models/User');
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 app.use(express.urlencoded({ extended: true }));
+
+app.use(session({
+    secret,
+    resave: false,
+    saveUninitialized: false
+}));
 
 // ? Our routes
 app.get('/', (req, res) => {
@@ -50,6 +58,7 @@ app.post('/login', async (req, res) => {
     if (user) {
         const isMatch = await bcrypt.compare(password, user.password);
         if (isMatch) {
+            req.session.userId = user._id;
             res.redirect('/admin');
         } else {
             res.redirect('/login');
@@ -60,6 +69,7 @@ app.post('/login', async (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
+    if (!req.session.userId) res.redirect('/login');
     res.send('This is admin page.')
 });
 
