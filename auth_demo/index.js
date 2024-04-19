@@ -24,8 +24,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // ? Our routes
 app.get('/', (req, res) => {
-    res.send('This home page.');
+    res.send('This is home page.');
 });
+
 app.get('/register', (req, res) => {
     res.render('register');
 });
@@ -40,8 +41,26 @@ app.post('/register', async (req, res) => {
     res.redirect('/');
 });
 
+app.get('/login', (req, res) => {
+    res.render('login');
+});
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+    if (user) {
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (isMatch) {
+            res.redirect('/admin');
+        } else {
+            res.redirect('/login');
+        }
+    } else {
+        res.redirect('/login');
+    }
+});
+
 app.get('/admin', (req, res) => {
-    res.send('Admin page has login required.')
+    res.send('This is admin page.')
 });
 
 // * Check listen app
