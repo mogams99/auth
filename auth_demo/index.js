@@ -67,10 +67,16 @@ app.post('/login', async (req, res) => {
         res.redirect('/login');
     }
 });
+app.post('/logout', (req, res) => {
+    // req.session.userId = null;
+    req.session.destroy(() => {
+        res.redirect('/login');
+    });
+})
 
 app.get('/admin', (req, res) => {
     if (!req.session.userId) res.redirect('/login');
-    res.send('This is admin page.')
+    res.render('admin');
 });
 
 // * Check listen app
