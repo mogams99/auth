@@ -30,15 +30,25 @@ app.use(session({
     saveUninitialized: false
 }));
 
+const auth = (req, res, next) => {
+    if (!req.session.userId) return res.redirect('/login');
+    next();
+}
+
+const hasUser = (req, res, next) => {
+    if (req.session.userId) return res.redirect('/admin');
+    next();
+}
+
 // ? Our routes
 app.get('/', (req, res) => {
     res.send('This is home page.');
 });
 
-app.get('/register', (req, res) => {
+app.get('/register', hasUser, (req, res) => {
     res.render('register');
 });
-app.post('/register', async (req, res) => {
+app.post('/register', hasUser, async (req, res) => {
     const { username, password } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10);
     const user = new User({
@@ -49,10 +59,10 @@ app.post('/register', async (req, res) => {
     res.redirect('/');
 });
 
-app.get('/login', (req, res) => {
+app.get('/login', hasUser, (req, res) => {
     res.render('login');
 });
-app.post('/login', async (req, res) => {
+app.post('/login', hasUser, async (req, res) => {
     const { username, password } = req.body;
     const user = await User.findOne({ username });
     if (user) {
@@ -67,16 +77,18 @@ app.post('/login', async (req, res) => {
         res.redirect('/login');
     }
 });
-app.post('/logout', (req, res) => {
-    // req.session.userId = null;
+app.post('/logout', auth, (req, res) => {
     req.session.destroy(() => {
         res.redirect('/login');
     });
 })
 
-app.get('/admin', (req, res) => {
-    if (!req.session.userId) res.redirect('/login');
+app.get('/admin', auth, (req, res) => {
     res.render('admin');
+});
+
+app.get('/profile/settings', auth, (req, res) => {
+    res.send(`This is profile settings page. User ID: ${req.session.userId}`);
 });
 
 // * Check listen app
